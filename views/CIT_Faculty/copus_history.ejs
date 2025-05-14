@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CIT Faculty History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="/css/CIT_Faculty/copus_history.css">
+</head>
+<body>
+  <header>
+    <div class="logo">LOGO</div>
+    <div class="header-icons">
+      <i class="bi bi-bell-fill" style="color: black;"></i>
+      <div class="user-icon-circle">
+        <i class="bi bi-person-fill"></i>
+      </div>
+      <i class="bi bi-caret-down-fill"></i>
+    </div>
+  </header>  
+
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="custom-sidebar">
+        <h6>Welcome, Jerald Espares</h6>
+        <small>EMP-2025-0001</small>
+        <hr>
+        <a href="/CIT_Faculty_dashboard">DASHBOARD</a>
+        <hr>
+        <a href="/CIT_Faculty_copus_result">COPUS RESULT</a>
+        <hr>
+        <a href="/CIT_Faculty_copus_history" class="active">COPUS HISTORY</a>
+        <hr>
+        <a href="/CIT_Faculty_schedule_management">SCHEDULE</a>
+        <hr>
+        <a href="/CIT_Faculty_setting">SETTINGS</a>
+        <hr>
+        <form action="/logout" method="POST">
+          <button type="submit" class="logout-btn">Logout</button>
+        </form>
+      </div>      
+
+      <!-- Main content -->
+      <main class="main-content">
+        <h1>PERSONAL COPUS HISTORY</h1>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>FULLNAME</th>
+                <th>DATE</th>
+                <th>START & END TIME</th>
+                <th>YEAR / GRADE LEVEL<br>CLASS OBSERVE</th>
+                <th>SEMESTER</th>
+                <th>SUBJECT</th>
+                <th>MODALITY OR<br>CLASS SETUP</th>
+                <th>OBSERVER</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Jerald R Espares</td>
+                <td>02-11-2025</td>
+                <td>8:00 am - 10:00 am</td>
+                <td>Year 3</td>
+                <td>2</td>
+                <td>ITE 293 Networking 2</td>
+                <td>FLEX</td>
+                <td>Evelyn Juliano</td>
+                <td class="status-completed">Completed</td>
+              </tr>
+              <!-- Empty rows -->
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+              
+            </tbody>
+          </table>
+        </div>
+      </main>
+  </div>
+  <script src="/js/CIT_Faculty/copus_history.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>COPUS Observation Table</title>
+  <link rel="stylesheet" href="/css/Observer/copus_start.css">
+</head>
+<body>
+
+    <div class="header" id="timer">2:00</div>
+  
+    <div class="copus-details">
+      <h2 style="color: #2f5597;">COPUS DETAILS</h2>
+      <hr class="bu">
+      <div style="display: flex; align-items: stretch; justify-content: space-between;">
+        <div class="gr" style="flex: 1; padding-right: 20px;">
+          <p style="display: flex; justify-content: space-between;">
+            <strong>Fullname:</strong> <span>Jerald R Esperas</span>
+          </p>
+          
+          <p style="display: flex; justify-content: space-between;">
+            <strong>Date:</strong> <span>September 18, 2022</span>
+          </p>
+          <p style="display: flex; justify-content: space-between;">
+            <strong>Year / Grade Level:</strong> <span>Y3</span>
+          </p>
+          <p style="display: flex; justify-content: space-between;">
+            <strong>Subject:</strong> <span>ITE 6099 Capstone 1</span>
+          </p>
+        </div>
+      
+        <!-- Vertical divider (not <hr> which is horizontal) -->
+        <div style="width: 1px; background-color: #ccc; margin: 0 20px;"></div>
+      
+        <div class="gr" style="flex: 1; padding-left: 20px;">
+          <p style="display: flex; justify-content: space-between;">
+            <strong>Semester:</strong> <span>S1</span>
+          </p>
+          <p style="display: flex; justify-content: space-between;">
+            <strong>Setup:</strong> <span>FLEX</span>
+          </p>
+          <p style="display: flex; justify-content: space-between;">
+            <strong>Observer:</strong> <span>Evelyn Juliano</span>
+          </p>
+        </div>
+      </div>
+      
+      <hr class="bu">
+      <p><strong>Instructions:</strong> For each 2-minute interval, check columns to show what's happening in each category. Check multiple columns where appropriate.</p>
+    </div>
+  
+    <!-- Tables Container -->
+    <div id="tablesContainer"></div>
+  
+    <!-- Submit Button -->
+    <form action="/Observer_copus_summary" method="get" style="text-align: center; margin: 20px;">
+        <button style="padding: 10px 20px; background-color: #2f5597; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer;">SUBMIT</button>
+    </form>  
+  
+
+    <script src="/js/Observer/copus_start.js"></script>
+  
+  </body>
+  
+</html>

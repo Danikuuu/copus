@@ -1,0 +1,55 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+  }
+  .header {
+    background-color: #2f5597;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  .copus-details {
+    padding: 15px;
+    margin: 15px;
+  }
+  .copus-table {
+    margin: 15px;
+    background-color: white;
+    width: 97vw;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th,
+  td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 4px;
+    font-size: 0.8rem;
+    border: 1px solid #dee2e6;
+  }
+  input[type="checkbox"] {
+    transform: scale(1.2);
+  }
+  input.comment {
+    width: 90%;
+    padding: 4px;
+  }
+  .table-header {
+    background-color: #2f5597;
+    color: white;
+  }
+
+  .bu{
+    border: 1px solid #2f5597 ;
+  }
+
+  .gr span{
+    color: #6cabbb;
+    font-weight: bold;
+  }
