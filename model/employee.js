@@ -8,6 +8,7 @@ const employeeSchema = new mongoose.Schema({
   role: String,
   email: { type: String, required: true, unique: true },
   password: String,
+  resetToken: String,
   status: {type: String, default: 'active'},
   isFirstLogin: {
     type: Boolean,
