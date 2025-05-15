@@ -51,21 +51,24 @@ app.get('/forgot-password', (req, res) => {
 
 
 // Modify this cause i dont tested it yet
+const crypto = require('crypto');
+
 app.post('/forgot-password', async (req, res) => {
   const { employeeId } = req.body;
 
   try {
-    const user = await User.findOne({ employeeId, email });
+    const user = await User.findOne({ employeeId });
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.render('forgot_password_change'); // no user found, still show success page for security
     }
 
-    // Generate a password reset token and save it to the user
-    const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const resetToken = crypto.randomBytes(20).toString('hex');
     user.resetToken = resetToken;
+    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour expiry
     await user.save();
 
-    // Send an email with the reset link
+    req.session.employeeId = employeeId;
+
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -76,38 +79,64 @@ app.post('/forgot-password', async (req, res) => {
 
     const mailOptions = {
       from: '"Admin" <copus8059@gmail.com>',
-      to: email,
-      subject: 'Your changing your password - PHINMA Copus System',
+      to: user.email,
+      subject: 'Password Reset - PHINMA Copus System',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #ddd;">
-          <h2 style="color: #2c3e50;">Hello ${firstname} ${lastname},</h2>
-          <p style="font-size: 15px; color: #333;">You request to change your password in <strong>PHINMA Copus System</strong>. Here are your OTP Code verification:</p>
-          
-          <div style="margin: 20px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 8px; font-weight: bold;">Email:</td>
-                <td style="padding: 8px;">${email}</td>
-              </tr>
-            </table>
-          </div>
-    
-          <p style="font-size: 15px; color: #333;">Please log in and change your password upon first login for security reasons.</p>
-          
-          <p style="margin-top: 30px; font-size: 14px; color: #555;">Best regards,<br><strong>PHINMA IT Team</strong></p>
+          <h2 style="color: #2c3e50;">Hello ${user.firstname} ${user.lastname},</h2>
+          <p>You requested to reset your password. Use the code below to verify your identity:</p>
+          <h3 style="color: #e74c3c;">${resetToken}</h3>
+          <p>If you did not request this, please ignore this email.</p>
+          <p>– PHINMA IT Team</p>
         </div>
       `
     };
-    
 
+    console.log('Sending reset email to:', user.email);
     await transporter.sendMail(mailOptions);
+    res.render('forgot_password_change');
 
   } catch (err) {
     console.error('Forgot password error:', err);
-    res.status(500).send('Internal Server Error');
+    console.log(err);
   }
 });
 
+
+app.post('/forgot-password-change', async (req, res) => {
+  const { resetToken, newPassword } = req.body;
+  const employeeId = req.session.employeeId;
+
+  if (!employeeId) {
+    return res.status(403).send('Session expired. Please try again.');
+  }
+
+  try {
+    const user = await User.findOne({
+      employeeId,
+      resetToken,
+      resetTokenExpiry: { $gt: Date.now() } // check token not expired
+    });
+
+    if (!user) {
+      return res.status(400).send('Invalid token or session expired');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
+
+    req.session.employeeId = null;
+
+    res.send('Password successfully changed');
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 app.get('/login', (req, res) => {
   res.render('login');
@@ -183,9 +212,9 @@ app.post('/change_password', isAuthenticated, async (req, res) => {
         return res.redirect('/super_admin_dashboard');
       case 'admin':
         return res.redirect('/admin_dashboard');
-      case 'observer':
+      case 'Observer':
         return res.redirect('/observer_dashboard');
-      case 'faculty':
+      case 'CIT Teacher':
         return res.redirect('/CIT_Faculty_dashboard');
       default:
         return res.redirect('/');
@@ -239,16 +268,60 @@ app.get('/super_admin_dashboard', isAuthenticated, async (req, res) => {
     const user = await User.findById(req.session.user.id);
     if (!user) return res.redirect('/login');
 
+    const schedules = await Schedule.find({});
+    const eventMap = {};
+
+    // Group schedules by date
+    schedules.forEach(sch => {
+      const date = new Date(sch.date).toISOString().split('T')[0];
+      if (!eventMap[date]) eventMap[date] = [];
+      eventMap[date].push(sch);
+    });
+
+    const calendarEvents = Object.entries(eventMap).map(([date, scheduleList]) => {
+      const total = scheduleList.length;
+
+      const totalCompleted = scheduleList.filter(s => s.status.toLowerCase() === 'completed').length;
+      const totalCancelled = scheduleList.filter(s => s.status.toLowerCase() === 'cancelled').length;
+      const totalPending = scheduleList.filter(s => s.status.toLowerCase() === 'pending').length;
+
+      let color = 'orange';
+      let statusLabel = 'Pending';
+
+      if (totalCompleted === total) {
+        color = 'green';
+        statusLabel = 'Completed';
+      } else if (totalCancelled === total) {
+        color = 'red';
+        statusLabel = 'Cancelled';
+      } else if (totalPending === total) {
+        color = 'orange';
+        statusLabel = 'Pending';
+      } else {
+        color = 'blue';
+        statusLabel = `${totalCompleted} ✅ / ${totalCancelled} ❌ / ${totalPending} ⏳`;
+      }
+
+      return {
+        title: statusLabel,
+        date,
+        color
+      };
+    });
+
     res.render('Super_Admin/dashboard', {
       employeeId: user.employeeId,
       firstName: user.firstname,
-      lastName: user.lastname
+      lastName: user.lastname,
+      calendarEvents: JSON.stringify(calendarEvents)
     });
+
   } catch (err) {
-    console.error('Error fetching user for dashboard:', err);
+    console.error('Error fetching dashboard data:', err);
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 app.get('/super_admin_user_management', isAuthenticated, async (req, res) => {
   try {
