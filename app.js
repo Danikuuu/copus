@@ -375,9 +375,223 @@ app.get('/observer_schedule_management',isAuthenticated, (req, res) => res.rende
 app.get('/observer_setting',isAuthenticated, (req, res) => res.render('Observer/setting'));
 
 // Admin Pages
-app.get('/admin_dashboard',isAuthenticated, (req, res) => res.render('Admin/dashboard'));
-app.get('/admin_user_management',isAuthenticated, (req, res) => res.render('Admin/user_management'));
-app.get('/admin_schedule',isAuthenticated, (req, res) => res.render('Admin/schedule'));
+app.get('/admin_dashboard', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    if (!user) return res.redirect('/login');
+
+    const schedules = await Schedule.find({});
+    const eventMap = {};
+
+    // Group schedules by date
+    schedules.forEach(sch => {
+      const date = new Date(sch.date).toISOString().split('T')[0];
+      if (!eventMap[date]) eventMap[date] = [];
+      eventMap[date].push(sch);
+    });
+
+    const calendarEvents = Object.entries(eventMap).map(([date, scheduleList]) => {
+      const total = scheduleList.length;
+
+      const totalCompleted = scheduleList.filter(s => s.status.toLowerCase() === 'completed').length;
+      const totalCancelled = scheduleList.filter(s => s.status.toLowerCase() === 'cancelled').length;
+      const totalPending = scheduleList.filter(s => s.status.toLowerCase() === 'pending').length;
+
+      let color = 'orange';
+      let statusLabel = 'Pending';
+
+      if (totalCompleted === total) {
+        color = 'green';
+        statusLabel = 'Completed';
+      } else if (totalCancelled === total) {
+        color = 'red';
+        statusLabel = 'Cancelled';
+      } else if (totalPending === total) {
+        color = 'orange';
+        statusLabel = 'Pending';
+      } else {
+        color = 'blue';
+        statusLabel = `${totalCompleted} ✅ / ${totalCancelled} ❌ / ${totalPending} ⏳`;
+      }
+
+      return {
+        title: statusLabel,
+        date,
+        color
+      };
+    });
+
+    res.render('Admin/dashboard', {
+      employeeId: user.employeeId,
+      firstName: user.firstname,
+      lastName: user.lastname,
+      calendarEvents: JSON.stringify(calendarEvents)
+    });
+
+  } catch (err) {
+    console.error('Error fetching dashboard data:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/admin_user_management', isAuthenticated, async (req, res) => {
+  try {
+    const employees = await User.find({ role: { $ne: 'admin' } });
+    res.render('Admin/user_management', { employees });
+  } catch (err) {
+    res.status(500).send('Failed to load user management view');
+  }
+});
+
+app.post('/admin_update_user_status', isAuthenticated, async (req, res) => {
+  const { employeeId, status } = req.body;
+
+  try {
+    const user = await User.findById(req.session.user.id);
+    const targetEmployee = await User.findOneAndUpdate(
+      { employeeId },
+      { status },
+      { new: true } // Return the updated doc
+    );
+
+    if (!targetEmployee) return res.status(404).send('User not found');
+
+    await Log.create({
+      action: 'Update Employee Status',
+      performedBy: user.id,
+      performedByRole: user.role,
+      details: `Changed status of employee ${targetEmployee.firstname} ${targetEmployee.lastname} (ID: ${employeeId}) to ${status}.`
+    });
+
+    res.status(200).send('Status updated');
+  } catch (err) {
+    console.error('Error updating user status:', err);
+    res.status(500).send('Failed to update user status');
+  }
+});
+
+app.post('/admin_update_user', isAuthenticated, async (req, res) => {
+  const { employeeId, department, lastname, firstname, role, email } = req.body;
+
+  try {
+    const user = await User.findById(req.session.user.id);
+    const updated = await User.findOneAndUpdate(
+      { employeeId },
+      { department, lastname, firstname, role, email },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).send('Employee not found');
+
+    await Log.create({
+      action: 'Update Employee',
+      performedBy: user.id,
+      performedByRole: user.role,
+      details: `Updated employee: ${firstname} ${lastname} (ID: ${employeeId}), role: ${role}, department: ${department}.`
+    });
+
+    res.redirect('/admin_user_management');
+  } catch (err) {
+    console.error('Error updating user:', err);
+    res.status(500).send('Failed to update user');
+  }
+});
+
+app.post('/admin_create_schedule', isAuthenticated, async (req, res) => {
+  const {
+    firstname,
+    lastname,
+    department,
+    date,
+    start_time,
+    end_time,
+    year_level,
+    semester,
+    subject_code,
+    subject,
+    observer,
+    modality,
+  } = req.body;
+
+  const user = await User.findById(req.session.user.id);  
+
+  try {
+    const newSchedule = new Schedule({
+      firstname,
+      lastname,
+      department,
+      date,
+      start_time,
+      end_time,
+      year_level,
+      semester,
+      subject_code,
+      subject,
+      observer,
+      modality,
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+  
+    await newSchedule.save();
+    
+    await Log.create({
+      action: 'Create Schedule',
+      performedBy: user.id,
+      performedByRole: user.role,
+      details: `Created a schedule for ${firstname} ${lastname} (Observer: ${observer}). Date : ${date}`
+    });
+
+    res.redirect('/admin_schedule');
+  } catch {
+    res.redirect('/admin_schedule');
+  }
+})
+
+app.get('/admin_schedule', isAuthenticated, async (req, res) => {
+  try {
+    const schedules = await Schedule.find().sort({ timestamp: -1 });
+    res.render('Admin/schedule', { schedules });
+  } catch (err) {
+    console.error('Error fetching logs:', err);
+    res.status(500).send('Failed to load logs');
+  }
+});
+
+app.post('/admin/schedule/cancel/:id', isAuthenticated, async (req, res) => {
+  await Schedule.findByIdAndUpdate(req.params.id, { status: 'cancelled' });
+  res.redirect('/super_admin_schedule');
+});
+
+// Complete schedule
+app.post('/admin/schedule/complete/:id', isAuthenticated, async (req, res) => {
+  await Schedule.findByIdAndUpdate(req.params.id, { status: 'completed' });
+  res.redirect('/super_admin_schedule');
+});
+
+// Update schedule
+app.post('/admin/schedule/update/:id', isAuthenticated, async (req, res) => {
+  const { firstname, lastname, department, start_time, end_time, year_level, semester, subject, subject_code, observer, modality } = req.body;
+
+  await Schedule.findByIdAndUpdate(req.params.id, {
+    firstname,
+    lastname,
+    department,
+    start_time,
+    end_time,
+    year_level,
+    semester,
+    subject,
+    subject_code,
+    observer,
+    modality,
+    updatedAt: new Date()
+  });
+
+  res.redirect('/super_admin_schedule');
+});
+
 app.get('/admin_copus_result',isAuthenticated, (req, res) => res.render('Admin/copus_result'));
 app.get('/admin_copus_history',isAuthenticated, (req, res) => res.render('Admin/copus_history'));
 app.get('/admin_setting',isAuthenticated, (req, res) => res.render('Admin/setting'));
