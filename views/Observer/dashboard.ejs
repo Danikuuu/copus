@@ -44,11 +44,36 @@
       </div>      
 
       <!-- Main content -->
-      
+      <div class="baba col-md-9 mt-3">
+        <div class="metric-container">
+          </div>          
 
-
+       
+            <div class="section-title mt-4">OBSERVATION CALENDAR</div>
+            <div id="calendar" style="padding: 10px; background-color: #fff; border-radius: 8px;"></div>
+      </div>
     </div>
+
   </div>
-  <script src="/js/Observer/dashboard.js"></script>
+  <script src="/js/Super_Admin/dashboard.js"></script>
+  <!-- FullCalendar CSS and JS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const calendarEl = document.getElementById('calendar');
+    const calendarEvents = <%- calendarEvents %>;
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      height: 500,
+      events: calendarEvents,
+      eventDisplay: 'block'
+    });
+
+    calendar.render();
+  });
+</script>
+
 </body>
 </html>

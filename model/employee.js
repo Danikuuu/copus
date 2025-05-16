@@ -5,7 +5,7 @@ const employeeSchema = new mongoose.Schema({
   department: String,
   lastname: String,
   firstname: String,
-  role: String,
+  role: { type: String, enum: ['admin', 'Obserser', 'CIT Teacher']},
   email: { type: String, required: true, unique: true },
   password: String,
   resetToken: String,

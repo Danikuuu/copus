@@ -72,13 +72,13 @@ app.post('/forgot-password', async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'copus8059@gmail.com',
-        pass: 'vbcm uvto lftk btib'
+        user: 'copus6251@gmail.com',
+        pass: 'spgh zwvd qevg oxoe '
       }
     });
 
     const mailOptions = {
-      from: '"Admin" <copus8059@gmail.com>',
+      from: '"Admin" <copus6251@gmail.com>',
       to: user.email,
       subject: 'Password Reset - PHINMA Copus System',
       html: `
@@ -154,7 +154,7 @@ app.post('/login', async (req, res) => {
     if (!isMatch) return res.redirect('/login?error=1');
 
     // comment this if the log in isnt working
-    if(foundEmployee.status != 'active') {
+    if(foundEmployee.status != 'Active'|| 'active') {
       res.render('/login');
     }
 
@@ -177,7 +177,7 @@ app.post('/login', async (req, res) => {
       case 'admin':
         return res.redirect('/admin_dashboard');
       case 'Observer':
-        return res.redirect('/observer_dashboard');
+        return res.redirect('/Observer_dashboard');
       case 'CIT Teacher':
         return res.redirect('/CIT_Faculty_dashboard');
       default:
@@ -238,7 +238,7 @@ app.post('/logout', (req, res) => {
 });
 
 // CIT Faculty Pages
-app.get('/CIT_Faculty_dashboard', isAuthenticated, (req, res) => res.render('CIT_Faculty/dashboard'));
+// app.get('/CIT_Faculty_dashboard', isAuthenticated, (req, res) => res.render('CIT_Faculty/dashboard'));
 app.get('/CIT_Faculty_copus_result', isAuthenticated, (req, res) => res.render('CIT_Faculty/copus_result'));
 app.get('/CIT_Faculty_copus_summary', isAuthenticated, (req, res) => res.render('CIT_Faculty/copus_summary'));
 app.get('/CIT_Faculty_copus_history', isAuthenticated, (req, res) => res.render('CIT_Faculty/copus_history'));
@@ -246,7 +246,127 @@ app.get('/CIT_Faculty_schedule_management', isAuthenticated, (req, res) => res.r
 app.get('/CIT_Faculty_setting', isAuthenticated, (req, res) => res.render('CIT_Faculty/setting'));
 
 // Observer Pages
-app.get('/observer_dashboard',isAuthenticated, (req, res) => res.render('Observer/dashboard'));
+app.get('/CIT_Faculty_dashboard', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    if (!user) return res.redirect('/login');
+
+    // Fetch only schedules for the same first and last name
+    const schedules = await Schedule.find({
+      firstname: user.firstname,
+      lastname: user.lastname
+    });
+
+    const eventMap = {};
+
+    // Group schedules by date
+    schedules.forEach(sch => {
+      const date = new Date(sch.date).toISOString().split('T')[0];
+      if (!eventMap[date]) eventMap[date] = [];
+      eventMap[date].push(sch);
+    });
+
+    const calendarEvents = Object.entries(eventMap).map(([date, scheduleList]) => {
+      const total = scheduleList.length;
+      const totalCompleted = scheduleList.filter(s => s.status.toLowerCase() === 'completed').length;
+      const totalCancelled = scheduleList.filter(s => s.status.toLowerCase() === 'cancelled').length;
+      const totalPending = scheduleList.filter(s => s.status.toLowerCase() === 'pending').length;
+
+      let color = 'orange';
+      let statusLabel = 'Pending';
+
+      if (totalCompleted === total) {
+        color = 'green';
+        statusLabel = 'Completed';
+      } else if (totalCancelled === total) {
+        color = 'red';
+        statusLabel = 'Cancelled';
+      } else if (totalPending === total) {
+        color = 'orange';
+        statusLabel = 'Pending';
+      } else {
+        color = 'blue';
+        statusLabel = `${totalCompleted} ✅ / ${totalCancelled} ❌ / ${totalPending} ⏳`;
+      }
+
+      return {
+        title: statusLabel,
+        date,
+        color
+      };
+    });
+EMP-4715-6279
+
+  } catch (err) {
+    console.error('Error fetching dashboard data:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+// Observer Dashboard
+app.get('/Observer_dashboard', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    if (!user) return res.redirect('/login');
+
+    // Fetch only schedules for the same first and last name
+    const schedules = await Schedule.find({
+      firstname: user.firstname,
+      lastname: user.lastname
+    });
+
+    const eventMap = {};
+
+    // Group schedules by date
+    schedules.forEach(sch => {
+      const date = new Date(sch.date).toISOString().split('T')[0];
+      if (!eventMap[date]) eventMap[date] = [];
+      eventMap[date].push(sch);
+    });
+
+    const calendarEvents = Object.entries(eventMap).map(([date, scheduleList]) => {
+      const total = scheduleList.length;
+      const totalCompleted = scheduleList.filter(s => s.status.toLowerCase() === 'completed').length;
+      const totalCancelled = scheduleList.filter(s => s.status.toLowerCase() === 'cancelled').length;
+      const totalPending = scheduleList.filter(s => s.status.toLowerCase() === 'pending').length;
+
+      let color = 'orange';
+      let statusLabel = 'Pending';
+
+      if (totalCompleted === total) {
+        color = 'green';
+        statusLabel = 'Completed';
+      } else if (totalCancelled === total) {
+        color = 'red';
+        statusLabel = 'Cancelled';
+      } else if (totalPending === total) {
+        color = 'orange';
+        statusLabel = 'Pending';
+      } else {
+        color = 'blue';
+        statusLabel = `${totalCompleted} ✅ / ${totalCancelled} ❌ / ${totalPending} ⏳`;
+      }
+
+      return {
+        title: statusLabel,
+        date,
+        color
+      };
+    });
+
+    res.render('CIT_Faculty/dashboard', {
+      employeeId: user.employeeId,
+      firstName: user.firstname,
+      lastName: user.lastname,
+      calendarEvents: JSON.stringify(calendarEvents)
+    });
+
+  } catch (err) {
+    console.error('Error fetching dashboard data:', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
 app.get('/observer_copus_result',isAuthenticated, (req, res) => res.render('Observer/copus_result'));
 app.get('/observer_copus_start',isAuthenticated, (req, res) => res.render('Observer/copus_start'));
 app.get('/observer_copus_summary',isAuthenticated, (req, res) => res.render('Observer/copus_summary'));
@@ -573,13 +693,13 @@ app.post('/add_employee', isAuthenticated, async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'copus8059@gmail.com',
-        pass: 'vbcm uvto lftk btib'
+        user: 'copus6251@gmail.com',
+        pass: 'spgh zwvd qevg oxoe '
       }
     });
 
     const mailOptions = {
-      from: '"Admin" <copus8059@gmail.com>',
+      from: '"Admin" <copus6251@gmail.com>',
       to: email,
       subject: 'Your Login Credentials - PHINMA Copus System',
       html: `
