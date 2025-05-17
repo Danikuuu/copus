@@ -153,9 +153,9 @@ app.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, foundEmployee.password);
     if (!isMatch) return res.redirect('/login?error=1');
 
-    // comment this if the log in isnt working
-    if(foundEmployee.status != 'Active'|| 'active') {
-      res.render('/login');
+    // Check if employee is active (Comment this part if the login is not working)
+    if (foundEmployee.status !== 'Active' && foundEmployee.status !== 'active') {
+      return res.render('login', { error: 'Your account is inactive. Please contact admin.' });
     }
 
     // Store user session
@@ -170,7 +170,8 @@ app.post('/login', async (req, res) => {
       return res.redirect('/change_password');
     }
 
-    // Redirect by role
+    console.log(foundEmployee.role);
+    // Redirect based on role
     switch (foundEmployee.role) {
       case 'super_admin':
         return res.redirect('/super_admin_dashboard');
@@ -178,7 +179,7 @@ app.post('/login', async (req, res) => {
         return res.redirect('/admin_dashboard');
       case 'Observer':
         return res.redirect('/Observer_dashboard');
-      case 'CIT Teacher':
+      case 'Faculty':
         return res.redirect('/CIT_Faculty_dashboard');
       default:
         return res.redirect('/login?error=1');
@@ -197,6 +198,10 @@ app.get('/change_password', isAuthenticated, (req, res) => {
 app.post('/change_password', isAuthenticated, async (req, res) => {
   const { newPassword } = req.body;
 
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -214,17 +219,16 @@ app.post('/change_password', isAuthenticated, async (req, res) => {
         return res.redirect('/admin_dashboard');
       case 'Observer':
         return res.redirect('/observer_dashboard');
-      case 'CIT Teacher':
+      case 'Faculty':
         return res.redirect('/CIT_Faculty_dashboard');
       default:
         return res.redirect('/');
     }
   } catch (err) {
     console.error('Password update error:', err);
-    res.status(500).send('Error updating password');
+    return res.status(500).send('Error updating password');
   }
 });
-
 
 // Logout
 app.post('/logout', (req, res) => {
@@ -242,16 +246,15 @@ app.post('/logout', (req, res) => {
 app.get('/CIT_Faculty_copus_result', isAuthenticated, (req, res) => res.render('CIT_Faculty/copus_result'));
 app.get('/CIT_Faculty_copus_summary', isAuthenticated, (req, res) => res.render('CIT_Faculty/copus_summary'));
 app.get('/CIT_Faculty_copus_history', isAuthenticated, (req, res) => res.render('CIT_Faculty/copus_history'));
-app.get('/CIT_Faculty_schedule_management', isAuthenticated, (req, res) => res.render('CIT_Faculty/schedule_management'));
+// app.get('/CIT_Faculty_schedule_management', isAuthenticated, (req, res) => res.render('CIT_Faculty/schedule_management'));
 app.get('/CIT_Faculty_setting', isAuthenticated, (req, res) => res.render('CIT_Faculty/setting'));
 
-// Observer Pages
+// CIT Faculty Pages
 app.get('/CIT_Faculty_dashboard', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
     if (!user) return res.redirect('/login');
 
-    // Fetch only schedules for the same first and last name
     const schedules = await Schedule.find({
       firstname: user.firstname,
       lastname: user.lastname
@@ -259,7 +262,6 @@ app.get('/CIT_Faculty_dashboard', isAuthenticated, async (req, res) => {
 
     const eventMap = {};
 
-    // Group schedules by date
     schedules.forEach(sch => {
       const date = new Date(sch.date).toISOString().split('T')[0];
       if (!eventMap[date]) eventMap[date] = [];
@@ -295,12 +297,122 @@ app.get('/CIT_Faculty_dashboard', isAuthenticated, async (req, res) => {
         color
       };
     });
-EMP-4715-6279
+
+    // ✅ Now render the view after processing
+    res.render('CIT_Faculty/dashboard', {
+      employeeId: user.employeeId,
+      firstName: user.firstname,
+      lastName: user.lastname,
+      calendarEvents: JSON.stringify(calendarEvents)
+    });
 
   } catch (err) {
     console.error('Error fetching dashboard data:', err);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
+});
+
+app.post('/faculty_create_schedule', isAuthenticated, async (req, res) => {
+  const {
+    firstname,
+    lastname,
+    department,
+    date,
+    start_time,
+    end_time,
+    year_level,
+    semester,
+    subject_code,
+    subject,
+    observer,
+    modality,
+  } = req.body;
+
+  const user = await User.findById(req.session.user.id);  
+  const employee_id = user.employeeId;
+
+  try {
+    const newSchedule = new Schedule({
+      employee_id,
+      firstname,
+      lastname,
+      department,
+      date,
+      start_time,
+      end_time,
+      year_level,
+      semester,
+      subject_code,
+      subject,
+      observer,
+      modality,
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+  
+    await newSchedule.save();
+    
+    await Log.create({
+      action: 'Create Schedule',
+      performedBy: user.id,
+      performedByRole: user.role,
+      details: `Created a schedule for ${firstname} ${lastname} (Observer: ${observer}). Date : ${date}`
+    });
+
+    res.redirect('CIT_Faculty_schedule_management');
+  } catch {
+    res.redirect('CIT_Faculty_schedule_management');
+  }
+})
+
+app.get('/CIT_Faculty_schedule_management', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    if (!user) return res.redirect('/login');
+
+    const schedules = await Schedule.find({ employee_id: user.employeeId }).sort({ timestamp: -1 });
+    console.log(schedules)
+    res.render('CIT_Faculty/schedule_management', { schedules });
+  } catch (err) {
+    console.error('Error fetching logs:', err);
+    res.status(500).send('Failed to load logs');
+  }
+});
+
+//  In this part the date is not being updated in the database fix it if may time
+// Cancel schedule
+app.post('/faculty/schedule/cancel/:id', isAuthenticated, async (req, res) => {
+  await Schedule.findByIdAndUpdate(req.params.id, { status: 'cancelled' });
+  res.redirect('/CIT_Faculty_schedule_management');
+});
+
+// Complete schedule
+app.post('/faculty/schedule/complete/:id', isAuthenticated, async (req, res) => {
+  await Schedule.findByIdAndUpdate(req.params.id, { status: 'completed' });
+  res.redirect('/CIT_Faculty_schedule_management');
+});
+
+// Update schedule
+app.post('/faculty/schedule/update/:id', isAuthenticated, async (req, res) => {
+  const { firstname, lastname, department, start_time, end_time, year_level, semester, subject, subject_code, observer, modality } = req.body;
+
+  await Schedule.findByIdAndUpdate(req.params.id, {
+    firstname,
+    lastname,
+    department,
+    start_time,
+    end_time,
+    year_level,
+    semester,
+    subject,
+    subject_code,
+    observer,
+    modality,
+    updatedAt: new Date()
+  });
+
+  res.redirect('/CIT_Faculty_schedule_management');
 });
 
 
@@ -311,10 +423,9 @@ app.get('/Observer_dashboard', isAuthenticated, async (req, res) => {
     if (!user) return res.redirect('/login');
 
     // Fetch only schedules for the same first and last name
-    const schedules = await Schedule.find({
-      firstname: user.firstname,
-      lastname: user.lastname
-    });
+    const schedules = await Schedule.find({ observer: user.firstname });
+
+    console.log(schedules);
 
     const eventMap = {};
 
@@ -355,7 +466,7 @@ app.get('/Observer_dashboard', isAuthenticated, async (req, res) => {
       };
     });
 
-    res.render('CIT_Faculty/dashboard', {
+    res.render('Observer/dashboard', {
       employeeId: user.employeeId,
       firstName: user.firstname,
       lastName: user.lastname,
@@ -365,6 +476,20 @@ app.get('/Observer_dashboard', isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error('Error fetching dashboard data:', err);
     res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/Observer_schedule_management', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    if (!user) return res.redirect('/login');
+
+    const schedules = await Schedule.find({ observer: user.firstname }).sort({ timestamp: -1 });
+    console.log(schedules)
+    res.render('Observer/schedule_management', { schedules });
+  } catch (err) {
+    console.error('Error fetching logs:', err);
+    res.status(500).send('Failed to load logs');
   }
 });
 app.get('/observer_copus_result',isAuthenticated, (req, res) => res.render('Observer/copus_result'));
@@ -856,7 +981,7 @@ app.post('/add_employee', isAuthenticated, async (req, res) => {
 
   // let employeeId;
   
-  // if(role == 'CIT Teacher') {
+  // if(role == 'Faculty') {
 
   //   // generate random ID for the employee ID
 

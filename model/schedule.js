@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const scheduleSchema = new mongoose.Schema({
+    employee_id: {type: String, required: true},
     firstname: {type : String, required: true},
     lastname: {type : String, required: true},
     department: {type : String, required: true},

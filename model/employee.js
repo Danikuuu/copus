@@ -5,11 +5,11 @@ const employeeSchema = new mongoose.Schema({
   department: String,
   lastname: String,
   firstname: String,
-  role: { type: String, enum: ['admin', 'Observer', 'CIT Teacher']},
+  role: { type: String, enum: ['admin', 'Observer', 'Faculty']},
   email: { type: String, required: true, unique: true },
   password: String,
   resetToken: String,
-  status: {type: String, default: 'active'},
+  status: {type: String, default: 'Active'},
   isFirstLogin: {
     type: Boolean,
     default: true
