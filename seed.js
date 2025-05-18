@@ -6,37 +6,100 @@ const Employee = require('./model/employee'); // adjust path if different
 // Sample data
 const seedEmployees = [
   {
-    employeeId: 'EMP001',
-    department: 'IT',
-    lastname: 'Doe',
-    firstname: 'John',
-    role: 'admin',
-    email: 'john.doe@example.com',
-    password: 'password123'
-  },
-  {
-    employeeId: 'EMP002',
-    department: 'HR',
-    lastname: 'Smith',
-    firstname: 'Jane',
-    role: 'employee',
-    email: 'jane.smith@example.com',
-    password: 'password123'
-  },
-  {
-    employeeId: 'SUPP ADD',
-    department: 'IT',
-    lastname: 'Doe',
-    firstname: 'John',
-    role: 'super_admin',
-    email: 'admin@example.com',
-    password: 'password123'
-  }
+      employeeId: 'EMP001',
+      department: 'IT',
+      lastname: 'Santos',
+      firstname: 'Juan',
+      role: 'super_admin',
+      email: 'juan.santos@example.com',
+      password: 'hashed_password_1'
+    },
+    {
+      employeeId: 'EMP002',
+      department: 'Math',
+      lastname: 'Reyes',
+      firstname: 'Ana',
+      role: 'admin',
+      email: 'ana.reyes@example.com',
+      password: 'hashed_password_2'
+    },
+    {
+      employeeId: 'EMP003',
+      department: 'English',
+      lastname: 'Garcia',
+      firstname: 'Leo',
+      role: 'Faculty',
+      email: 'leo.garcia@example.com',
+      password: 'hashed_password_3'
+    },
+    {
+      employeeId: 'EMP004',
+      department: 'Science',
+      lastname: 'Lopez',
+      firstname: 'Maria',
+      role: 'Faculty',
+      email: 'maria.lopez@example.com',
+      password: 'hashed_password_4'
+    },
+    {
+      employeeId: 'EMP005',
+      department: 'PE',
+      lastname: 'Cruz',
+      firstname: 'Pedro',
+      role: 'Observer',
+      email: 'pedro.cruz@example.com',
+      password: 'hashed_password_5'
+    },
+    {
+      employeeId: 'EMP006',
+      department: 'IT',
+      lastname: 'Fernandez',
+      firstname: 'Jose',
+      role: 'admin',
+      email: 'jose.fernandez@example.com',
+      password: 'hashed_password_6'
+    },
+    {
+      employeeId: 'EMP007',
+      department: 'Math',
+      lastname: 'Ramos',
+      firstname: 'Celia',
+      role: 'Observer',
+      email: 'celia.ramos@example.com',
+      password: 'hashed_password_7'
+    },
+    {
+      employeeId: 'EMP008',
+      department: 'English',
+      lastname: 'Torres',
+      firstname: 'Luis',
+      role: 'Faculty',
+      email: 'luis.torres@example.com',
+      password: 'hashed_password_8'
+    },
+    {
+      employeeId: 'EMP009',
+      department: 'Science',
+      lastname: 'Delos Santos',
+      firstname: 'Rhea',
+      role: 'Faculty',
+      email: 'rhea.delos@example.com',
+      password: 'hashed_password_9'
+    },
+    {
+      employeeId: 'EMP010',
+      department: 'PE',
+      lastname: 'Morales',
+      firstname: 'Tito',
+      role: 'Observer',
+      email: 'tito.morales@example.com',
+      password: 'hashed_password_10'
+    }
 ];
 
 async function seedDB() {
   try {
-    await mongoose.connect('mongodb+srv://Daniel:Jxkd937QVovHJsld@test.al3h5.mongodb.net/copusDB?retryWrites=true&w=majority&appName=copusDB', {
+    await mongoose.connect('mongodb+srv://copusAdmin:admin12345@cluster0.ugspmft.mongodb.net/copusDB?retryWrites=true&w=majority&appName=copusDB', {
         useNewUrlParser: true,
         useUnifiedTopology: true
       });      

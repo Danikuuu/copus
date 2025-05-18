@@ -1,74 +1,87 @@
 const mongoose = require('mongoose');
 const Schedule = require('./model/schedule');
+const Employee = require('./model/employee');
 
-const MONGO_URI = 'mongodb+srv://Daniel:Jxkd937QVovHJsld@test.al3h5.mongodb.net/copusDB?retryWrites=true&w=majority&appName=copusDB';
-
-const departments = ['CIT', 'COE', 'CAS'];
-const subjects = [
-  { code: 'ITE101', name: 'Intro to IT' },
-  { code: 'ITE206', name: 'Memory Mgt' },
-  { code: 'ITE301', name: 'Networks' },
-  { code: 'ITE304', name: 'System Analysis' },
-  { code: 'ITE310', name: 'Mobile Dev' }
-];
-const observers = ['Baylon - Bullena', 'Garcia - Cruz', 'Santos - Reyes'];
-const modalities = ['RAD', 'FLEX'];
-const statuses = ['completed', 'pending', 'cancelled'];
-
-function getRandomElement(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function generateRandomDateInMarch() {
-  const day = Math.floor(Math.random() * 31) + 1;
-  return new Date(`2025-03-${day.toString().padStart(2, '0')}T10:00:00Z`);
-}
+mongoose.connect('mongodb+srv://copusAdmin:admin12345@cluster0.ugspmft.mongodb.net/copusDB?retryWrites=true&w=majority&appName=copusDB')
+  .then(() => {
+    console.log('Connected to MongoDB');
+    return seedSchedules();
+  })
+  .catch(err => console.error('Connection error', err));
 
 async function seedSchedules() {
-  try {
-    await Schedule.deleteMany({});
-    const data = [];
+  await Schedule.deleteMany();
 
-    for (let i = 1; i <= 20; i++) {
-      const subj = getRandomElement(subjects);
-      const date = generateRandomDateInMarch();
-      const startTime = '10:00 AM';
-      const endTime = '11:00 AM';
+  const employees = await Employee.find({ role: 'Faculty' });
 
-      data.push({
-        firstname: `Faculty${i}`,
-        lastname: `Last${i}`,
-        department: getRandomElement(departments),
-        date: date,
-        start_time: startTime,
-        end_time: endTime,
-        year_level: `Year ${Math.ceil(Math.random() * 4)}`,
-        semester: getRandomElement(['Semester 1', 'Semester 2']),
-        subject: subj.name,
-        subject_code: subj.code,
-        observer: getRandomElement(observers),
-        modality: getRandomElement(modalities),
-        status: getRandomElement(statuses),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
+  if (employees.length < 3) {
+    console.log('Please seed at least 3 faculty employees first.');
+    return mongoose.disconnect();
+  }
+
+  const schedules = [
+    {
+      employee_id: employees[0].employeeId,
+      firstname: employees[0].firstname,
+      lastname: employees[0].lastname,
+      department: employees[0].department,
+      date: new Date('2025-05-20'),
+      start_time: '08:00 AM',
+      end_time: '10:00 AM',
+      year_level: '1st Year',
+      semester: 'Semester 1',
+      subject: 'Computer Programming',
+      subject_code: 'CS101',
+      observer: 'Pedro Cruz',
+      modality: 'RAD',
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      employee_id: employees[1].employeeId,
+      firstname: employees[1].firstname,
+      lastname: employees[1].lastname,
+      department: employees[1].department,
+      date: new Date('2025-05-22'),
+      start_time: '10:30 AM',
+      end_time: '12:00 PM',
+      year_level: '2nd Year',
+      semester: 'Semester 2',
+      subject: 'Discrete Math',
+      subject_code: 'MATH202',
+      observer: 'Celia Ramos',
+      modality: 'FLEX',
+      status: 'completed',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      employee_id: employees[2].employeeId,
+      firstname: employees[2].firstname,
+      lastname: employees[2].lastname,
+      department: employees[2].department,
+      date: new Date('2025-05-25'),
+      start_time: '01:00 PM',
+      end_time: '03:00 PM',
+      year_level: '3rd Year',
+      semester: 'Semester 1',
+      subject: 'Data Structures',
+      subject_code: 'CS203',
+      observer: 'Tito Morales',
+      modality: 'RAD',
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
+  ];
 
-    await Schedule.insertMany(data);
-    console.log('✅ Seeded 20 schedule records.');
+  try {
+    await Schedule.insertMany(schedules);
+    console.log('Schedule seeding successful!');
   } catch (err) {
-    console.error('❌ Error seeding schedules:', err);
+    console.error('Error inserting schedules:', err);
   } finally {
     mongoose.disconnect();
   }
 }
-
-// Establish DB connection first
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-    return mongoose.connection.once('open', seedSchedules);
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
-  });
