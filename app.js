@@ -107,6 +107,8 @@ app.post('/forgot-password-change', async (req, res) => {
   const { resetToken, newPassword } = req.body;
   const employeeId = req.session.employeeId;
 
+  console.log(employeeId);
+
   if (!employeeId) {
     return res.status(403).send('Session expired. Please try again.');
   }
@@ -131,7 +133,7 @@ app.post('/forgot-password-change', async (req, res) => {
 
     req.session.employeeId = null;
 
-    res.send('Password successfully changed');
+    res.redirect('/login');
   } catch (err) {
     console.error('Reset password error:', err);
     res.status(500).send('Internal Server Error');
